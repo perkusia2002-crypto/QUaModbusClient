@@ -24,10 +24,17 @@ jobs:
           modules: qtcharts
           cache: true
 
-      - name: Setup MSVC
+      - name: Setup MSVC 2019 toolset
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
+          toolset: 14.29
+
+      - name: Show compiler
+        shell: cmd
+        run: |
+          where cl
+          cl
 
       - name: Configure
         shell: cmd
