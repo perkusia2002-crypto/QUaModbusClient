@@ -1,0 +1,56 @@
+name: Build Windows Release
+
+on:
+  push:
+    branches:
+      - feature/autoconnect-reconnect
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: 5.15.2
+          arch: win64_msvc2019_64
+          modules: qtcharts
+          cache: true
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Configure
+        shell: cmd
+        run: qmake quamodbus.pro CONFIG+=release
+
+      - name: Build
+        shell: cmd
+        run: nmake /J2
+
+      - name: Deploy Qt
+        shell: cmd
+        run: |
+          mkdir release-package
+          copy release\QUaModbusClient.exe release-package\QUaModbusClient.exe
+          windeployqt --release --no-translations release-package\QUaModbusClient.exe
+
+      - name: Package
+        shell: powershell
+        run: Compress-Archive -Path release-package\* -DestinationPath QUaModbusClient-Windows-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QUaModbusClient-Windows-x64
+          path: QUaModbusClient-Windows-x64.zip
+          if-no-files-found: error
