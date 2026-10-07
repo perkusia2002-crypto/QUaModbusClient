@@ -30,11 +30,25 @@ jobs:
           arch: x64
           toolset: 14.29
 
-      - name: Show compiler
+      - name: Prepare CMake compiler environment
         shell: cmd
         run: |
           where cl
           cl
+          where cmake
+          where msbuild
+          set CC=cl
+          set CXX=cl
+          set CMAKE_GENERATOR=Visual Studio 16 2019
+          set CMAKE_GENERATOR_PLATFORM=x64
+          set CMAKE_C_COMPILER=cl
+          set CMAKE_CXX_COMPILER=cl
+          echo CC=%CC%
+          echo CXX=%CXX%
+          echo CMAKE_GENERATOR=%CMAKE_GENERATOR%
+          echo CMAKE_GENERATOR_PLATFORM=%CMAKE_GENERATOR_PLATFORM%
+          echo CMAKE_C_COMPILER=%CMAKE_C_COMPILER%
+          echo CMAKE_CXX_COMPILER=%CMAKE_CXX_COMPILER%
 
       - name: Configure
         shell: cmd
