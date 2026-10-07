@@ -135,7 +135,10 @@ void QUaModbusClient::connectDevice()
 {
 	QMutexLocker locker(&m_mutex);
 	// check if same
-	if (this->getState() == QModbusState::ConnectedState)
+	if (
+		this->getState() == QModbusState::ConnectedState ||
+		this->getState() == QModbusState::ConnectingState
+	)
 	{
 		return;
 	}
