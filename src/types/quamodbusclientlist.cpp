@@ -1019,6 +1019,10 @@ void QUaModbusClientList::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& 
 			);
 			// merge client config
 			client->fromDomElement(elemClient, errorLogs);
+			if (client->keepConnecting()->value().toBool())
+			{
+				client->connectDevice();
+			}
 			continue;
 		}
 		this->addClient<QUaModbusTcpClient>(strBrowseName);
@@ -1034,6 +1038,10 @@ void QUaModbusClientList::fromDomElement(QDomElement & domElem, QQueue<QUaLog>& 
 		}
 		// set client config
 		client->fromDomElement(elemClient, errorLogs);
+		if (client->keepConnecting()->value().toBool())
+		{
+			client->connectDevice();
+		}
 	}
 	// add Serial clients
 	QDomNodeList listSerialClients = domElem.elementsByTagName(QUaModbusRtuSerialClient::staticMetaObject.className());
