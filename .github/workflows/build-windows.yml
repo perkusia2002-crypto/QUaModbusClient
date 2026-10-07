@@ -77,13 +77,13 @@ jobs:
 
       - name: Build
         shell: cmd
-        run: nmake
+        run: nmake release
 
       - name: Deploy Qt
         shell: cmd
         run: |
           mkdir release-package
-          copy release\QUaModbusClient.exe release-package\QUaModbusClient.exe
+          copy build\win64\bin\release\QUaModbusClient.exe release-package\QUaModbusClient.exe
           windeployqt --release --no-translations release-package\QUaModbusClient.exe
 
       - name: Package
