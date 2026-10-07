@@ -39,6 +39,15 @@ jobs:
           arch: x64
           toolset: 14.29
 
+      - name: Patch QUaServer compiler detection
+        shell: powershell
+        run: |
+          $file = "libs/QUaServer.git/src/amalgamation/open62541amalgamation.pri"
+          $text = Get-Content $file -Raw
+          $text = $text.Replace('MSVC_VER = $(VisualStudioVersion)', 'MSVC_VER = 17.0')
+          Set-Content $file -Value $text -NoNewline
+          Write-Host "Patched QUaServer to use Visual Studio 17 2022 generator."
+
       - name: Prepare CMake compiler environment
         shell: cmd
         run: |
