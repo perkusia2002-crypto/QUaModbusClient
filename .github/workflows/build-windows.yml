@@ -17,6 +17,7 @@ jobs:
       CMAKE_GENERATOR_PLATFORM: x64
       CMAKE_C_COMPILER: cl
       CMAKE_CXX_COMPILER: cl
+      VisualStudioVersion: '17.0'
 
     steps:
       - name: Checkout
