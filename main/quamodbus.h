@@ -44,6 +44,7 @@ public:
     ~QUaModbus();
 
 	QUaModbusClientList* modbusClientList() const;
+	bool loadConfigFile(const QString& strConfigFileName);
 
 private slots:
 	void on_newConfig();

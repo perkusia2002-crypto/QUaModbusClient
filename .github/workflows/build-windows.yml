@@ -1,0 +1,98 @@
+name: Build Windows Release
+
+on:
+  push:
+    branches:
+      - feature/autoconnect-reconnect
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    env:
+      CC: cl
+      CXX: cl
+      CMAKE_GENERATOR: Visual Studio 16 2019
+      CMAKE_GENERATOR_PLATFORM: x64
+      CMAKE_C_COMPILER: cl
+      CMAKE_CXX_COMPILER: cl
+      VisualStudioVersion: '17.0'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730
+        with:
+          version: 5.15.2
+          arch: win64_msvc2019_64
+          modules: qtcharts
+          cache: true
+
+      - name: Setup MSVC 2019 toolset
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+          toolset: 14.29
+
+      - name: Patch QUaServer compiler detection
+        shell: powershell
+        run: |
+          $file = "libs/QUaServer.git/src/amalgamation/open62541amalgamation.pri"
+          $text = Get-Content $file -Raw
+          $text = [regex]::Replace($text, 'MSVC_VER\s*=\s*\$\$\(VisualStudioVersion\)', 'MSVC_VER = 17.0')
+          if (-not $text.Contains('equals(MSVC_VER, 17.0)')) {
+            $pattern = '(?m)(^\s*)isEmpty\(COMPILER\) \{'
+            $replacement = '$1equals(MSVC_VER, 17.0){' + [Environment]::NewLine +
+                            '$1    message("Compiler Detected : MSVC++ 17.0 (Visual Studio 2022)")' + [Environment]::NewLine +
+                            '$1    COMPILER = "Visual Studio 17 2022"' + [Environment]::NewLine +
+                            '$1}' + [Environment]::NewLine +
+                            '$1isEmpty(COMPILER) {'
+            $text = [regex]::Replace($text, $pattern, $replacement)
+          }
+          Set-Content $file -Value $text -NoNewline
+          Write-Host "Patched QUaServer for Visual Studio 17 2022."
+
+      - name: Prepare CMake compiler environment
+        shell: cmd
+        run: |
+          where cl
+          cl
+          where cmake
+          where msbuild
+          echo CC=%CC%
+          echo CXX=%CXX%
+          echo CMAKE_GENERATOR=%CMAKE_GENERATOR%
+          echo CMAKE_GENERATOR_PLATFORM=%CMAKE_GENERATOR_PLATFORM%
+          echo CMAKE_C_COMPILER=%CMAKE_C_COMPILER%
+          echo CMAKE_CXX_COMPILER=%CMAKE_CXX_COMPILER%
+
+      - name: Configure
+        shell: cmd
+        run: qmake quamodbus.pro CONFIG+=release
+
+      - name: Build
+        shell: cmd
+        run: nmake release
+
+      - name: Deploy Qt
+        shell: cmd
+        run: |
+          mkdir release-package
+          copy build\win64\bin\release\QUaModbusClient.exe release-package\QUaModbusClient.exe
+          windeployqt --release --no-translations release-package\QUaModbusClient.exe
+
+      - name: Package
+        shell: powershell
+        run: Compress-Archive -Path release-package\* -DestinationPath QUaModbusClient-Windows-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QUaModbusClient-Windows-x64
+          path: QUaModbusClient-Windows-x64.zip
+          if-no-files-found: error
