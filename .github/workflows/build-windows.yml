@@ -44,17 +44,13 @@ jobs:
         run: |
           $file = "libs/QUaServer.git/src/amalgamation/open62541amalgamation.pri"
           $text = Get-Content $file -Raw
-          $text = [regex]::Replace($text, 'MSVC_VER\s*=\s*\$\$\(VisualStudioVersion\)', 'MSVC_VER = 17.0', 1)
+          $text = $text -replace 'MSVC_VER\s*=\s*\$\$\(VisualStudioVersion\)', 'MSVC_VER = 17.0'
           if (-not $text.Contains('equals(MSVC_VER, 17.0)')) {
-            $pattern = '(?m)^(\s*)isEmpty\(COMPILER\) \{'
-            $replacement = @'
-$1equals(MSVC_VER, 17.0){
-$1        message("Compiler Detected : MSVC++ 17.0 (Visual Studio 2022)")
-$1        COMPILER = "Visual Studio 17 2022"
-$1}
-$1isEmpty(COMPILER) {
-'@
-            $text = [regex]::Replace($text, $pattern, $replacement.TrimEnd(), 1)
+            $insert = 'equals(MSVC_VER, 17.0){' + [Environment]::NewLine +
+                      '    message("Compiler Detected : MSVC++ 17.0 (Visual Studio 2022)")' + [Environment]::NewLine +
+                      '    COMPILER = "Visual Studio 17 2022"' + [Environment]::NewLine +
+                      '}' + [Environment]::NewLine
+            $text = $text -replace '(?m)(^\s*isEmpty\(COMPILER\) \{)', ($insert + '$1'), 1
           }
           Set-Content $file -Value $text -NoNewline
           Write-Host "Patched QUaServer for Visual Studio 17 2022."
