@@ -61,3 +61,13 @@ msbuild /m:8 /p:CL_MPCount=8 /p:Configuration=Release quamodbus.sln
 # Linux
 make -s -j$(nproc)
 ```
+
+# Command line startup
+
+A configuration XML file can be passed as the first command line argument:
+
+```bash
+QUaModbusClient.exe "C:\Configs\PR225.xml"
+```
+
+If the loaded TCP client has **KeepConnecting** enabled, it connects automatically at startup and reconnects after a connection loss.
