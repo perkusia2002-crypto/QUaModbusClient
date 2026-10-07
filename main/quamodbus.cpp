@@ -56,6 +56,50 @@ QUaModbusClientList* QUaModbus::modbusClientList() const
 	return mod;
 }
 
+bool QUaModbus::loadConfigFile(const QString& strConfigFileName)
+{
+	QFile fileConfig(strConfigFileName);
+	if (!fileConfig.exists())
+	{
+		return false;
+	}
+
+	if (!fileConfig.open(QIODevice::ReadOnly))
+	{
+		return false;
+	}
+
+	const auto byteContents = fileConfig.readAll();
+	fileConfig.close();
+
+	if (!this->on_closeConfig(true))
+	{
+		return false;
+	}
+
+	auto errorLogs = this->setXmlConfig(byteContents);
+	bool hasError = false;
+	while (!errorLogs.isEmpty())
+	{
+		auto errorLog = errorLogs.dequeue();
+		if (errorLog.level == QUaLogLevel::Error)
+		{
+			hasError = true;
+		}
+	}
+
+	if (hasError)
+	{
+		this->on_closeConfig(true);
+		return false;
+	}
+
+	m_strConfigFile = QFileInfo(fileConfig).absoluteFilePath();
+	m_strLastPathUsed = m_strConfigFile;
+	this->setWindowTitle(m_strTitle.arg(m_strConfigFile, QUaModbus::m_strAppName));
+	return true;
+}
+
 void QUaModbus::on_newConfig()
 {
 	// clear old config (asks for confirmation is there is a config open)
